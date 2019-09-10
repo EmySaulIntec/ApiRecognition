@@ -15,29 +15,15 @@ namespace ApiRecognition.GroupPers
     {
         const int maxTransactionCount = 5;
 
-        const string FaceListId = "face";
         const string _subscriptionKey = "06e5b9acb8064452b892004cc25fdfab";
-
+        const string personGroupId = "myfriends";
 
         private readonly IFaceServiceClient faceClient = new FaceServiceClient(_subscriptionKey, "https://eastus2.api.cognitive.microsoft.com/face/v1.0/");
 
 
-        public async void IdentifyPerson(string[] trainingPathPerson, string pathSearchPeople, string namePerson)
+        public async void IdentifyPerson(IEnumerable<Stream> trainingPathPerson, IEnumerable<Stream> PeopleTest, string namePerson)
         {
-
-            string personGroupId = "myfriends";
-
-            try
-            {
-                var group = await faceClient.GetPersonGroupAsync(personGroupId);
-                await faceClient.DeletePersonGroupAsync(personGroupId);
-            }
-            catch (Exception ex)
-            {
-
-            }
-
-            await faceClient.CreatePersonGroupAsync(personGroupId, "My Friends");
+            await CreateGroup();
 
             var person = await faceClient.CreatePersonAsync(personGroupId, namePerson);
 
@@ -49,20 +35,32 @@ namespace ApiRecognition.GroupPers
 
             Thread.Sleep(1000);
 
-            var picturesPatch = await SeatchPersonInPictures(personGroupId, pathSearchPeople);
-
+            var picturesPatch = await SeatchPersonInPictures(personGroupId, PeopleTest);
 
             // Do the same for Bill and Clare
             await faceClient.DeletePersonGroupAsync(personGroupId);
-
         }
 
-        private async Task<List<string>> SeatchPersonInPictures(string personGroupId, string pathSearchPeople)
+        private async Task CreateGroup()
+        {
+            try
+            {
+                var group = await faceClient.GetPersonGroupAsync(personGroupId);
+                await faceClient.DeletePersonGroupAsync(personGroupId);
+            }
+            catch (Exception ex)
+            {
+
+            }
+                await faceClient.CreatePersonGroupAsync(personGroupId, "My Friends");
+        }
+
+        private async Task<List<Stream>> SeatchPersonInPictures(string personGroupId, IEnumerable<Stream> pathSearchPeople)
         {
             int transactionCount = 0;
 
-            List<string> pictures = new List<string>();
-            foreach (string imagePath in Directory.GetFiles(pathSearchPeople, "*.jpg"))
+            List<Stream> pictures = new List<Stream>();
+            foreach (Stream person in pathSearchPeople)
             {
                 if (transactionCount == maxTransactionCount)
                 {
@@ -72,9 +70,9 @@ namespace ApiRecognition.GroupPers
                 else
                     transactionCount += 1;
 
-                List<Person> people = await IdentifyPersons(personGroupId, imagePath);
+                List<Person> people = await IdentifyPersons(personGroupId, person);
                 if (people.Any())
-                    pictures.Add(imagePath);
+                    pictures.Add(person);
             }
 
             if (transactionCount == 10)
@@ -83,57 +81,54 @@ namespace ApiRecognition.GroupPers
             return pictures;
         }
 
-        private async Task<List<Person>> IdentifyPersons(string personGroupId, string testImageFile)
+        private async Task<List<Person>> IdentifyPersons(string personGroupId, Stream streamPerson)
         {
             List<Person> people = new List<Person>();
             try
             {
-                using (Stream s = File.OpenRead(testImageFile))
+
+                Face[] faces;
+                try
                 {
+                    faces = await faceClient.DetectAsync(streamPerson);
+                }
+                catch (Exception ex)
+                {
+                    faces = new Face[3];
+                }
 
-                    Face[] faces;
-                    try
+
+                Guid[] faceIds = faces.Select(face => face.FaceId).ToArray();
+
+
+                IdentifyResult[] results;
+
+                try
+                {
+                    results = await faceClient.IdentifyAsync(personGroupId, faceIds);
+                }
+                catch (Exception ex)
+                {
+                    results = new IdentifyResult[2];
+                }
+
+                foreach (var identifyResult in results)
+                {
+                    Console.WriteLine("Result of face: {0}", identifyResult.FaceId);
+                    if (identifyResult.Candidates.Length == 0)
                     {
-                        faces = await faceClient.DetectAsync(s);
+                        Console.WriteLine("No one identified");
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        faces = new Face[3];
-                    }
+                        var candidateId = identifyResult.Candidates[0].PersonId;
 
-
-                    Guid[] faceIds = faces.Select(face => face.FaceId).ToArray();
-
-
-                    IdentifyResult[] results;
-
-                    try
-                    {
-                        results = await faceClient.IdentifyAsync(personGroupId, faceIds);
-                    }
-                    catch (Exception ex)
-                    {
-                        results = new IdentifyResult[2];
-                    }
-
-                    foreach (var identifyResult in results)
-                    {
-                        Console.WriteLine("Result of face: {0}", identifyResult.FaceId);
-                        if (identifyResult.Candidates.Length == 0)
+                        people.Add(new Person()
                         {
-                            Console.WriteLine("No one identified");
-                        }
-                        else
-                        {
-                            var candidateId = identifyResult.Candidates[0].PersonId;
+                            Name = candidateId.ToString()
+                        });
 
-                            people.Add(new Person()
-                            {
-                                Name = candidateId.ToString()
-                            });
-
-                            break;
-                        }
+                        break;
                     }
                 }
             }
@@ -160,25 +155,20 @@ namespace ApiRecognition.GroupPers
             }
         }
 
-        private async Task AddFaceToPerson(string personGroupId, Microsoft.ProjectOxford.Face.Contract.CreatePersonResult person, string[] personPictures)
+        private async Task AddFaceToPerson(string personGroupId, CreatePersonResult person, IEnumerable<Stream> personPictures)
         {
-            foreach (string imagePath in personPictures)
+            foreach (var streamFace in personPictures)
             {
-                using (Stream s = File.OpenRead(imagePath))
+                try
                 {
-                    try
-                    {
-                        // Detect faces in the image and add to Anna
-                        await faceClient.AddPersonFaceAsync(personGroupId, person.PersonId, s);
-                    }
-                    catch (Exception ex)
-                    {
-
-                    }
-
-                    //await faceClient.PersonGroupPerson.AddFaceFromStreamAsync(
-                    //    personGroupId, ana.PersonId, s);
+                    // Detect faces in the image and add to Anna
+                    await faceClient.AddPersonFaceAsync(personGroupId, person.PersonId, streamFace);
                 }
+                catch (Exception ex)
+                {
+
+                }
+
             }
         }
     }

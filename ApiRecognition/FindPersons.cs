@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Security;
 using System.Text;
@@ -70,10 +71,17 @@ namespace ApiRecognition
 
         private void Button2_Click(object sender, EventArgs e)
         {
-             folderBrowserDialog1.ShowDialog();
+            folderBrowserDialog1.ShowDialog();
             string selectedPatch = folderBrowserDialog1.SelectedPath;
             SearchPerson p = new SearchPerson();
-            p.IdentifyPerson(this.openFileDialog1.FileNames, selectedPatch, txtName.Text);
+
+            IEnumerable<Stream> filesTest = Directory.GetFiles(selectedPatch, "*.jpg").Select(patch => File.OpenRead(patch));
+            IEnumerable<Stream> filesTraining = this.openFileDialog1.FileNames.Select(patch => File.OpenRead(patch));
+
+
+
+            p.IdentifyPerson(filesTraining, filesTest, txtName.Text);
+
 
         }
     }
