@@ -69,20 +69,35 @@ namespace ApiRecognition
             }
         }
 
-        private void Button2_Click(object sender, EventArgs e)
+        private async void Button2_Click(object sender, EventArgs e)
         {
             folderBrowserDialog1.ShowDialog();
             string selectedPatch = folderBrowserDialog1.SelectedPath;
             SearchPerson p = new SearchPerson();
 
-            IEnumerable<Stream> filesTest = Directory.GetFiles(selectedPatch, "*.jpg").Select(patch => File.OpenRead(patch));
-            IEnumerable<Stream> filesTraining = this.openFileDialog1.FileNames.Select(patch => File.OpenRead(patch));
+            IEnumerable<FileStream> filesTraining = this.openFileDialog1.FileNames.Select(patch => File.OpenRead(patch));
+            IEnumerable<FileStream> filesTest = Directory.GetFiles(selectedPatch, "*.jpg").Select(patch => File.OpenRead(patch)).ToList();
+
+            await p.CreatePersonsGroup(filesTraining, txtName.Text);
+
+            await p.SearchPersonInPictures(filesTest, (streamImageFinded) =>
+            {
+                AddImage(streamImageFinded);
+            });
+
+            await p.DeleteGroup();
 
 
+        }
 
-            p.IdentifyPerson(filesTraining, filesTest, txtName.Text);
-
-
+        private void AddImage(FileStream streamImageFinded)
+        {
+            PictureBox pb = new PictureBox();
+            Image loadedImage = Image.FromFile(streamImageFinded.Name);
+            pb.Height = loadedImage.Height;
+            pb.Width = loadedImage.Width;
+            pb.Image = loadedImage;
+            flowLayoutPanel2.Controls.Add(pb);
         }
     }
 }

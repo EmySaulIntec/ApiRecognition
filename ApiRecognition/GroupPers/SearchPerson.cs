@@ -13,7 +13,7 @@ namespace ApiRecognition.GroupPers
 {
     public class SearchPerson
     {
-        const int maxTransactionCount = 5;
+        const int MAX_TRANSACTION_COUNT = 5;
 
         const string _subscriptionKey = "06e5b9acb8064452b892004cc25fdfab";
         const string personGroupId = "myfriends";
@@ -21,7 +21,14 @@ namespace ApiRecognition.GroupPers
         private readonly IFaceServiceClient faceClient = new FaceServiceClient(_subscriptionKey, "https://eastus2.api.cognitive.microsoft.com/face/v1.0/");
 
 
-        public async void IdentifyPerson(IEnumerable<Stream> trainingPathPerson, IEnumerable<Stream> PeopleTest, string namePerson)
+
+
+        public async Task DeleteGroup()
+        {
+            await faceClient.DeletePersonGroupAsync(personGroupId);
+        }
+
+        public async Task CreatePersonsGroup(IEnumerable<Stream> trainingPathPerson, string namePerson)
         {
             await CreateGroup();
 
@@ -32,13 +39,6 @@ namespace ApiRecognition.GroupPers
             await faceClient.TrainPersonGroupAsync(personGroupId);
 
             await WaitForTrainedPersonGroup(personGroupId);
-
-            Thread.Sleep(1000);
-
-            var picturesPatch = await SeatchPersonInPictures(personGroupId, PeopleTest);
-
-            // Do the same for Bill and Clare
-            await faceClient.DeletePersonGroupAsync(personGroupId);
         }
 
         private async Task CreateGroup()
@@ -52,36 +52,36 @@ namespace ApiRecognition.GroupPers
             {
 
             }
-                await faceClient.CreatePersonGroupAsync(personGroupId, "My Friends");
+            await faceClient.CreatePersonGroupAsync(personGroupId, "My Friends");
         }
 
-        private async Task<List<Stream>> SeatchPersonInPictures(string personGroupId, IEnumerable<Stream> pathSearchPeople)
+        public async Task SearchPersonInPictures(IEnumerable<FileStream> pathSearchPeople, Action<FileStream> processImageAction = null)
         {
             int transactionCount = 0;
 
-            List<Stream> pictures = new List<Stream>();
-            foreach (Stream person in pathSearchPeople)
+            foreach (FileStream person in pathSearchPeople)
             {
-                if (transactionCount == maxTransactionCount)
+                if (transactionCount == MAX_TRANSACTION_COUNT)
                 {
-                    Thread.Sleep(1000);
+                    await Task.Delay(1000);
                     transactionCount = 0;
                 }
                 else
                     transactionCount += 1;
 
                 List<Person> people = await IdentifyPersons(personGroupId, person);
+
                 if (people.Any())
-                    pictures.Add(person);
+                    processImageAction?.Invoke(person);
+
             }
 
             if (transactionCount == 10)
-                Thread.Sleep(1000);
+                await Task.Delay(1000);
 
-            return pictures;
         }
 
-        private async Task<List<Person>> IdentifyPersons(string personGroupId, Stream streamPerson)
+        private async Task<List<Person>> IdentifyPersons(string personGroupId, FileStream streamPerson)
         {
             List<Person> people = new List<Person>();
             try

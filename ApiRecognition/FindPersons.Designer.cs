@@ -36,6 +36,7 @@
             this.button2 = new System.Windows.Forms.Button();
             this.txtName = new System.Windows.Forms.TextBox();
             this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
+            this.flowLayoutPanel2 = new System.Windows.Forms.FlowLayoutPanel();
             this.SuspendLayout();
             // 
             // imageList1
@@ -61,10 +62,10 @@
             // flowLayoutPanel1
             // 
             this.flowLayoutPanel1.AutoScroll = true;
-            this.flowLayoutPanel1.AutoSize = true;
+            this.flowLayoutPanel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.flowLayoutPanel1.Location = new System.Drawing.Point(50, 64);
             this.flowLayoutPanel1.Name = "flowLayoutPanel1";
-            this.flowLayoutPanel1.Size = new System.Drawing.Size(1270, 322);
+            this.flowLayoutPanel1.Size = new System.Drawing.Size(655, 346);
             this.flowLayoutPanel1.TabIndex = 3;
             // 
             // button2
@@ -84,12 +85,22 @@
             this.txtName.Size = new System.Drawing.Size(194, 22);
             this.txtName.TabIndex = 5;
             // 
+            // flowLayoutPanel2
+            // 
+            this.flowLayoutPanel2.AutoScroll = true;
+            this.flowLayoutPanel2.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.flowLayoutPanel2.Location = new System.Drawing.Point(787, 64);
+            this.flowLayoutPanel2.Name = "flowLayoutPanel2";
+            this.flowLayoutPanel2.Size = new System.Drawing.Size(655, 346);
+            this.flowLayoutPanel2.TabIndex = 6;
+            // 
             // FindPersons
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.AutoScroll = true;
             this.ClientSize = new System.Drawing.Size(1531, 450);
+            this.Controls.Add(this.flowLayoutPanel2);
             this.Controls.Add(this.txtName);
             this.Controls.Add(this.button2);
             this.Controls.Add(this.flowLayoutPanel1);
@@ -110,5 +121,6 @@
         private System.Windows.Forms.Button button2;
         private System.Windows.Forms.TextBox txtName;
         private System.Windows.Forms.FolderBrowserDialog folderBrowserDialog1;
+        private System.Windows.Forms.FlowLayoutPanel flowLayoutPanel2;
     }
 }
