@@ -1,0 +1,16 @@
+C:\Users\Emy\source\repos\ApiRecognition\ApiRecognition\bin\Debug\ApiRecognition.exe.config
+C:\Users\Emy\source\repos\ApiRecognition\ApiRecognition\bin\Debug\ApiRecognition.exe
+C:\Users\Emy\source\repos\ApiRecognition\ApiRecognition\bin\Debug\ApiRecognition.pdb
+C:\Users\Emy\source\repos\ApiRecognition\ApiRecognition\obj\Debug\ApiRecognition.Form1.resources
+C:\Users\Emy\source\repos\ApiRecognition\ApiRecognition\obj\Debug\ApiRecognition.Properties.Resources.resources
+C:\Users\Emy\source\repos\ApiRecognition\ApiRecognition\obj\Debug\ApiRecognition.csproj.GenerateResource.cache
+C:\Users\Emy\source\repos\ApiRecognition\ApiRecognition\obj\Debug\ApiRecognition.exe
+C:\Users\Emy\source\repos\ApiRecognition\ApiRecognition\obj\Debug\ApiRecognition.pdb
+C:\Users\Emy\source\repos\ApiRecognition\ApiRecognition\obj\Debug\ApiRecognition.csprojAssemblyReference.cache
+C:\Users\Emy\source\repos\ApiRecognition\ApiRecognition\bin\Debug\Microsoft.ProjectOxford.Face.dll
+C:\Users\Emy\source\repos\ApiRecognition\ApiRecognition\bin\Debug\Newtonsoft.Json.dll
+C:\Users\Emy\source\repos\ApiRecognition\ApiRecognition\bin\Debug\System.Diagnostics.DiagnosticSource.dll
+C:\Users\Emy\source\repos\ApiRecognition\ApiRecognition\bin\Debug\Newtonsoft.Json.xml
+C:\Users\Emy\source\repos\ApiRecognition\ApiRecognition\bin\Debug\System.Diagnostics.DiagnosticSource.xml
+C:\Users\Emy\source\repos\ApiRecognition\ApiRecognition\obj\Debug\ApiRecognition.csproj.CopyComplete
+C:\Users\Emy\source\repos\ApiRecognition\ApiRecognition\obj\Debug\ApiRecognition.FindPersons.resources

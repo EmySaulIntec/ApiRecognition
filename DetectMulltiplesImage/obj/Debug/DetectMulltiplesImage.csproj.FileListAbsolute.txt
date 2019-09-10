@@ -1,0 +1,6 @@
+C:\Users\Emy\source\repos\ApiRecognition\DetectMulltiplesImage\bin\Debug\DetectMulltiplesImage.exe.config
+C:\Users\Emy\source\repos\ApiRecognition\DetectMulltiplesImage\bin\Debug\DetectMulltiplesImage.exe
+C:\Users\Emy\source\repos\ApiRecognition\DetectMulltiplesImage\bin\Debug\DetectMulltiplesImage.pdb
+C:\Users\Emy\source\repos\ApiRecognition\DetectMulltiplesImage\obj\Debug\DetectMulltiplesImage.csprojAssemblyReference.cache
+C:\Users\Emy\source\repos\ApiRecognition\DetectMulltiplesImage\obj\Debug\DetectMulltiplesImage.exe
+C:\Users\Emy\source\repos\ApiRecognition\DetectMulltiplesImage\obj\Debug\DetectMulltiplesImage.pdb

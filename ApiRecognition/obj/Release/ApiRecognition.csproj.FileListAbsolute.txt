@@ -1,0 +1,8 @@
+C:\Users\Emy\source\repos\ApiRecognition\ApiRecognition\bin\Release\ApiRecognition.exe.config
+C:\Users\Emy\source\repos\ApiRecognition\ApiRecognition\bin\Release\ApiRecognition.exe
+C:\Users\Emy\source\repos\ApiRecognition\ApiRecognition\bin\Release\ApiRecognition.pdb
+C:\Users\Emy\source\repos\ApiRecognition\ApiRecognition\obj\Release\ApiRecognition.Form1.resources
+C:\Users\Emy\source\repos\ApiRecognition\ApiRecognition\obj\Release\ApiRecognition.Properties.Resources.resources
+C:\Users\Emy\source\repos\ApiRecognition\ApiRecognition\obj\Release\ApiRecognition.csproj.GenerateResource.cache
+C:\Users\Emy\source\repos\ApiRecognition\ApiRecognition\obj\Release\ApiRecognition.exe
+C:\Users\Emy\source\repos\ApiRecognition\ApiRecognition\obj\Release\ApiRecognition.pdb
