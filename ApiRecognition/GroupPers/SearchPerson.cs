@@ -5,8 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace ApiRecognition.GroupPers
@@ -17,10 +15,11 @@ namespace ApiRecognition.GroupPers
 
         const string _subscriptionKey = "06e5b9acb8064452b892004cc25fdfab";
         const string personGroupId = "myfriends";
+        List<Person> people = new List<Person>();
 
         private readonly IFaceServiceClient faceClient = new FaceServiceClient(_subscriptionKey, "https://eastus2.api.cognitive.microsoft.com/face/v1.0/");
 
-
+        int personCreateds = 0;
 
 
         public async Task DeleteGroup()
@@ -28,20 +27,26 @@ namespace ApiRecognition.GroupPers
             await faceClient.DeletePersonGroupAsync(personGroupId);
         }
 
-        public async Task CreatePersonsGroup(IEnumerable<Stream> trainingPathPerson, string namePerson)
+        public async Task CreatePerson(IEnumerable<Stream> trainingPathPerson, string namePerson)
         {
-            await CreateGroup();
+            CreatePersonResult person = await faceClient.CreatePersonAsync(personGroupId, namePerson);
 
-            var person = await faceClient.CreatePersonAsync(personGroupId, namePerson);
+            people.Add(new Person()
+            {
+                Name = namePerson,
+                PersonId = person.PersonId
+            });
 
             await AddFaceToPerson(personGroupId, person, trainingPathPerson);
 
             await faceClient.TrainPersonGroupAsync(personGroupId);
 
             await WaitForTrainedPersonGroup(personGroupId);
+
+            personCreateds += 1;
         }
 
-        private async Task CreateGroup()
+        public async Task CreateGroupAsync()
         {
             try
             {
@@ -55,11 +60,11 @@ namespace ApiRecognition.GroupPers
             await faceClient.CreatePersonGroupAsync(personGroupId, "My Friends");
         }
 
-        public async Task SearchPersonInPictures(IEnumerable<FileStream> pathSearchPeople, Action<FileStream> processImageAction = null)
+        public async Task SearchPersonInPictures(IEnumerable<FileStream> pathSearchPeople, Action<FileStream> processImageAction = null, bool personTogueter = false)
         {
             int transactionCount = 0;
 
-            foreach (FileStream person in pathSearchPeople)
+            foreach (FileStream pictureToSearch in pathSearchPeople)
             {
                 if (transactionCount == MAX_TRANSACTION_COUNT)
                 {
@@ -69,10 +74,10 @@ namespace ApiRecognition.GroupPers
                 else
                     transactionCount += 1;
 
-                List<Person> people = await IdentifyPersons(personGroupId, person);
+                var isIdentifiedInPictured = await IdentifyPersons(personGroupId, pictureToSearch, personTogueter);
 
-                if (people.Any())
-                    processImageAction?.Invoke(person);
+                if (isIdentifiedInPictured)
+                    processImageAction?.Invoke(pictureToSearch);
 
             }
 
@@ -81,12 +86,10 @@ namespace ApiRecognition.GroupPers
 
         }
 
-        private async Task<List<Person>> IdentifyPersons(string personGroupId, FileStream streamPerson)
+        private async Task<bool> IdentifyPersons(string personGroupId, FileStream streamPerson, bool personTogueter)
         {
-            List<Person> people = new List<Person>();
             try
             {
-
                 Face[] faces;
                 try
                 {
@@ -112,31 +115,12 @@ namespace ApiRecognition.GroupPers
                     results = new IdentifyResult[2];
                 }
 
-                foreach (var identifyResult in results)
-                {
-                    Console.WriteLine("Result of face: {0}", identifyResult.FaceId);
-                    if (identifyResult.Candidates.Length == 0)
-                    {
-                        Console.WriteLine("No one identified");
-                    }
-                    else
-                    {
-                        var candidateId = identifyResult.Candidates[0].PersonId;
-
-                        people.Add(new Person()
-                        {
-                            Name = candidateId.ToString()
-                        });
-
-                        break;
-                    }
-                }
+                return (personTogueter && results.Count(e => e.Candidates.Any()) == personCreateds) || (!personTogueter && results.Any(e => e.Candidates.Any()));
             }
             catch (Exception ex)
             {
-
+                return false;
             }
-            return people;
         }
 
         private async Task WaitForTrainedPersonGroup(string personGroupId)

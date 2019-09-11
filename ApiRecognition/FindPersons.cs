@@ -15,6 +15,7 @@ namespace ApiRecognition
 {
     public partial class FindPersons : Form
     {
+        SearchPerson p = new SearchPerson();
         public FindPersons()
         {
             InitializeComponent();
@@ -69,25 +70,10 @@ namespace ApiRecognition
             }
         }
 
-        private async void Button2_Click(object sender, EventArgs e)
+        private void Button2_Click(object sender, EventArgs e)
         {
             folderBrowserDialog1.ShowDialog();
-            string selectedPatch = folderBrowserDialog1.SelectedPath;
-            SearchPerson p = new SearchPerson();
-
-            IEnumerable<FileStream> filesTraining = this.openFileDialog1.FileNames.Select(patch => File.OpenRead(patch));
-            IEnumerable<FileStream> filesTest = Directory.GetFiles(selectedPatch, "*.jpg").Select(patch => File.OpenRead(patch)).ToList();
-
-            await p.CreatePersonsGroup(filesTraining, txtName.Text);
-
-            await p.SearchPersonInPictures(filesTest, (streamImageFinded) =>
-            {
-                AddImage(streamImageFinded);
-            });
-
-            await p.DeleteGroup();
-
-
+            txtFolderPath.Text = folderBrowserDialog1.SelectedPath;
         }
 
         private void AddImage(FileStream streamImageFinded)
@@ -98,6 +84,36 @@ namespace ApiRecognition
             pb.Width = loadedImage.Width;
             pb.Image = loadedImage;
             flowLayoutPanel2.Controls.Add(pb);
+        }
+
+        private async void button3_Click(object sender, EventArgs e)
+        {
+            IEnumerable<FileStream> facePersons = this.openFileDialog1.FileNames.Select(patch => File.OpenRead(patch));
+
+            await p.CreatePerson(facePersons, txtNamePerson.Text);
+
+            MessageBox.Show("Persona agregada");
+
+        }
+
+        private async void button4_Click(object sender, EventArgs e)
+        {
+            IEnumerable<FileStream> filesTest = Directory.GetFiles(txtFolderPath.Text, "*.jpg")
+                .Select(patch => File.OpenRead(patch)).ToList();
+
+            await p.SearchPersonInPictures(filesTest, (streamImageFinded) =>
+            {
+                AddImage(streamImageFinded);
+            }, checkBox1.Checked);
+
+            await p.DeleteGroup();
+
+            MessageBox.Show("Busqueda Finalizada");
+        }
+
+        private async void FindPersons_Load(object sender, EventArgs e)
+        {
+            await p.CreateGroupAsync();
         }
     }
 }
