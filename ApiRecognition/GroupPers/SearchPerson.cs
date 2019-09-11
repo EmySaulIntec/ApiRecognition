@@ -13,51 +13,41 @@ namespace ApiRecognition.GroupPers
     {
         const int MAX_TRANSACTION_COUNT = 5;
 
-        const string _subscriptionKey = "06e5b9acb8064452b892004cc25fdfab";
-        const string personGroupId = "myfriends";
-        List<Person> people = new List<Person>();
+        const string SUBSCRIPTION_KEY = "06e5b9acb8064452b892004cc25fdfab";
+        const string PERSON_GROUP_ID = "myfriends";
 
-        private readonly IFaceServiceClient faceClient = new FaceServiceClient(_subscriptionKey, "https://eastus2.api.cognitive.microsoft.com/face/v1.0/");
+        private int PersonCreateds = 0;
 
-        int personCreateds = 0;
-
+        private readonly IFaceServiceClient faceClient = new FaceServiceClient(SUBSCRIPTION_KEY, "https://eastus2.api.cognitive.microsoft.com/face/v1.0/");
 
         public async Task DeleteGroup()
         {
-            await faceClient.DeletePersonGroupAsync(personGroupId);
+            await faceClient.DeletePersonGroupAsync(PERSON_GROUP_ID);
         }
 
-        public async Task CreatePerson(IEnumerable<Stream> trainingPathPerson, string namePerson)
+        public async Task<List<Stream>> CreatePerson(IEnumerable<Stream> trainingPathPerson, string namePerson)
         {
-            CreatePersonResult person = await faceClient.CreatePersonAsync(personGroupId, namePerson);
+            CreatePersonResult person = await faceClient.CreatePersonAsync(PERSON_GROUP_ID, namePerson);
 
-            people.Add(new Person()
-            {
-                Name = namePerson,
-                PersonId = person.PersonId
-            });
+            var facesNotDetected = await AddFaceToPerson(PERSON_GROUP_ID, person, trainingPathPerson);
 
-            await AddFaceToPerson(personGroupId, person, trainingPathPerson);
+            await faceClient.TrainPersonGroupAsync(PERSON_GROUP_ID);
 
-            await faceClient.TrainPersonGroupAsync(personGroupId);
+            await WaitForTrainedPersonGroup(PERSON_GROUP_ID);
 
-            await WaitForTrainedPersonGroup(personGroupId);
+            PersonCreateds += 1;
 
-            personCreateds += 1;
+            return facesNotDetected;
         }
 
         public async Task CreateGroupAsync()
         {
-            try
-            {
-                var group = await faceClient.GetPersonGroupAsync(personGroupId);
-                await faceClient.DeletePersonGroupAsync(personGroupId);
-            }
-            catch (Exception ex)
-            {
+            var groups = await faceClient.ListPersonGroupsAsync();
 
-            }
-            await faceClient.CreatePersonGroupAsync(personGroupId, "My Friends");
+            if (groups.Any(e => e.PersonGroupId == PERSON_GROUP_ID))
+                await faceClient.DeletePersonGroupAsync(PERSON_GROUP_ID);
+
+            await faceClient.CreatePersonGroupAsync(PERSON_GROUP_ID, "My Friends");
         }
 
         public async Task SearchPersonInPictures(IEnumerable<FileStream> pathSearchPeople, Action<FileStream> processImageAction = null, bool personTogueter = false)
@@ -74,53 +64,28 @@ namespace ApiRecognition.GroupPers
                 else
                     transactionCount += 1;
 
-                var isIdentifiedInPictured = await IdentifyPersons(personGroupId, pictureToSearch, personTogueter);
+                var isIdentifiedInPictured = await IdentifyPersons(PERSON_GROUP_ID, pictureToSearch, personTogueter);
 
                 if (isIdentifiedInPictured)
                     processImageAction?.Invoke(pictureToSearch);
-
             }
 
             if (transactionCount == 10)
                 await Task.Delay(1000);
-
         }
 
         private async Task<bool> IdentifyPersons(string personGroupId, FileStream streamPerson, bool personTogueter)
         {
-            try
-            {
-                Face[] faces;
-                try
-                {
-                    faces = await faceClient.DetectAsync(streamPerson);
-                }
-                catch (Exception ex)
-                {
-                    faces = new Face[3];
-                }
+            Face[] faces = await faceClient.DetectAsync(streamPerson);
 
+            Guid[] faceIds = faces.Select(face => face.FaceId).ToArray();
 
-                Guid[] faceIds = faces.Select(face => face.FaceId).ToArray();
-
-
-                IdentifyResult[] results;
-
-                try
-                {
-                    results = await faceClient.IdentifyAsync(personGroupId, faceIds);
-                }
-                catch (Exception ex)
-                {
-                    results = new IdentifyResult[2];
-                }
-
-                return (personTogueter && results.Count(e => e.Candidates.Any()) == personCreateds) || (!personTogueter && results.Any(e => e.Candidates.Any()));
-            }
-            catch (Exception ex)
-            {
+            if (faceIds.Length == 0)
                 return false;
-            }
+
+            IdentifyResult[] results = await faceClient.IdentifyAsync(personGroupId, faceIds);
+
+            return (personTogueter && results.Count(e => e.Candidates.Any()) == PersonCreateds) || (!personTogueter && results.Any(e => e.Candidates.Any()));
         }
 
         private async Task WaitForTrainedPersonGroup(string personGroupId)
@@ -131,29 +96,28 @@ namespace ApiRecognition.GroupPers
                 trainingStatus = await faceClient.GetPersonGroupTrainingStatusAsync(personGroupId);
 
                 if (trainingStatus.Status != Status.Running)
-                {
                     break;
-                }
 
                 await Task.Delay(1000);
             }
         }
 
-        private async Task AddFaceToPerson(string personGroupId, CreatePersonResult person, IEnumerable<Stream> personPictures)
+        private async Task<List<Stream>> AddFaceToPerson(string personGroupId, CreatePersonResult person, IEnumerable<Stream> personPictures)
         {
+            List<Stream> facesNotDetected = new List<Stream>();
+
             foreach (var streamFace in personPictures)
             {
                 try
                 {
-                    // Detect faces in the image and add to Anna
                     await faceClient.AddPersonFaceAsync(personGroupId, person.PersonId, streamFace);
                 }
-                catch (Exception ex)
+                catch (FaceAPIException ex)
                 {
-
+                    facesNotDetected.Add(streamFace);
                 }
-
             }
+            return facesNotDetected;
         }
     }
 }
