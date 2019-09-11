@@ -90,7 +90,7 @@ namespace ApiRecognition
         {
             IEnumerable<FileStream> facePersons = this.openFileDialog1.FileNames.Select(patch => File.OpenRead(patch));
 
-            await p.CreatePerson(facePersons, txtNamePerson.Text);
+            var facesNotDetected = await p.CreatePerson(facePersons, txtNamePerson.Text);
 
             MessageBox.Show("Persona agregada");
 
@@ -98,7 +98,7 @@ namespace ApiRecognition
 
         private async void button4_Click(object sender, EventArgs e)
         {
-            IEnumerable<FileStream> filesTest = Directory.GetFiles(txtFolderPath.Text, "*.jpg")
+            IEnumerable<FileStream> filesTest = Directory.GetFiles(txtFolderPath.Text, "*.jpg", SearchOption.AllDirectories)
                 .Select(patch => File.OpenRead(patch)).ToList();
 
             await p.SearchPersonInPictures(filesTest, (streamImageFinded) =>
